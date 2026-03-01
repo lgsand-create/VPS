@@ -4,7 +4,7 @@
 |----------|-------|
 | LAN IP | 192.168.1.250 |
 | Intern gateway | 10.10.10.1 (vmbr1) |
-| Hardvara | Dell Pro Max Tower T2, Intel CPU |
+| Hardvara | Dell Pro Max Tower T2 FCT2250, Intel CPU |
 | RAM | 32 GB |
 | GPU | NVIDIA RTX 5060 Ti 16 GB VRAM (passthrough till VM 104) |
 | OS | Proxmox VE 8.x (Debian Bookworm, PVE kernel) |
@@ -25,11 +25,38 @@ parted                  # Diskpartitionering
 **Fil:** `/etc/default/grub`
 
 ```
-GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_iommu=on iommu=pt video=efifb:off"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet intel_iommu=on iommu=pt iommu.forcedac=1 video=efifb:off pcie_aspm=off crashkernel=256M"
 ```
 
 - `intel_iommu=on iommu=pt` -- GPU passthrough (VFIO)
+- `iommu.forcedac=1` -- Tvingar 64-bit DMA-adressering (fixar DMA-mappningsproblem)
 - `video=efifb:off` -- Forhindrar att hosten tar GPU:ns framebuffer
+- `pcie_aspm=off` -- Stangar av PCIe power management
+- `crashkernel=256M` -- Reserverar minne for kdump vid kernel panic
+
+## Modprobe-konfiguration
+
+### `/etc/modprobe.d/vfio.conf`
+```
+options vfio-pci ids=10de:2d04,10de:22eb disable_idle_d3=1
+softdep nvidia pre: vfio-pci
+softdep nouveau pre: vfio-pci
+```
+- `disable_idle_d3=1` -- Forhindrar GPU D3cold power state (Blackwell-bugg)
+- `softdep` -- Sakerställer att VFIO tar GPU:n fore nvidia/nouveau
+
+### `/etc/modprobe.d/kvm.conf`
+```
+options kvm ignore_msrs=1
+```
+- Fangar ogiltiga MSR-lasningar fran NVIDIA-drivern (utan detta → krasch)
+
+### `/etc/sysctl.d/99-audit-ratelimit.conf`
+```
+kernel.printk_ratelimit = 5
+kernel.printk_ratelimit_burst = 10
+```
+- Forhindrar audit-log-flood fran CT 105 (apparmor DENIED)
 
 ## Natverksbryggor
 
@@ -128,8 +155,14 @@ cores: 2, memory: 4096
 ### VM 104 (cmp-yolo01)
 
 ```
-hostname: cmp-yolo01
-net0: bridge=vmbr1
-hostpci0: 02:00,pcie=1,x-vga=1    # GPU passthrough
+balloon: 0                          # Obligatoriskt for GPU passthrough
+bios: ovmf
+cpu: host
+hostpci0: 02:00,pcie=1,rombar=0    # GPU passthrough, ROM-BAR av
+machine: q35
+memory: 8192
 onboot: 0                           # Manuell start (GPU-beroende)
+net0: bridge=vmbr1
 ```
+
+**OBS:** Se `docs/infra/gpu-stability.md` for kanda VFIO-problem med RTX 5060 Ti.

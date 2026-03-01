@@ -125,6 +125,40 @@ Full v3-pipeline: ~15 FPS -- 90 min match ~ 4 timmar
 Utan pose:        ~25 FPS -- 90 min match ~ 2 timmar
 ```
 
+## NVIDIA-konfiguration (guest)
+
+### `/etc/modprobe.d/nvidia.conf`
+```
+options nvidia NVreg_DmaRemapPeerMmio=0
+```
+- Stanger av P2P DMA (minskar VFIO-lockup-risk)
+
+### GPU power limit
+```bash
+sudo nvidia-smi -pm 1       # Persistence mode (behallar settings)
+sudo nvidia-smi -pl 150     # 150W (minimum for detta kort, range 150-180W)
+```
+
+## YOLO-traning
+
+### Custom-tranad modell: football-v1
+```
+Sokvag:  /home/jonas/yolo-worker/training/runs/football-v1/weights/
+Modell:  yolov8m.pt (finetunad)
+Dataset: football-players-detection-20 (298 train, 49 val)
+Epochs:  68/100 (avbruten pga host-lockup)
+Basta:   best.pt — mAP50=0.902, mAP50-95=0.602 (epoch 64)
+```
+
+### Traningsparametrar
+```
+batch=4, imgsz=1280, workers=4, device=0, amp=True
+optimizer=AdamW(lr=0.00125), patience=20
+```
+
+**OBS:** Traning orsakar host-lockup efter ~60-70 epochs.
+Se `docs/infra/gpu-stability.md` for detaljer och atergarder.
+
 ## Vanliga kommandon
 
 ```bash
