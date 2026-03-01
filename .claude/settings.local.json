@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npx playwright install:*)",
+      "Bash(node -e:*)",
+      "Bash(npx playwright test --list)",
+      "Read(//c/Users/Mi0sa/**)",
+      "Bash(dir:*)",
+      "Bash(node scrapers/minridskola/scrape.js:*)",
+      "Bash(node:*)",
+      "WebFetch(domain:www.backatorpif.se)",
+      "WebFetch(domain:www.laget.se)",
+      "Bash(powershell -Command:*)",
+      "Bash(ls:*)",
+      "WebSearch",
+      "Bash(find:*)",
+      "WebFetch(domain:claude.ai)",
+      "Bash(npm uninstall:*)",
+      "Bash(ssh:*)",
+      "Bash(curl:*)",
+      "Bash(python3:*)",
+      "Bash(npm run test:deep:*)",
+      "Bash(npx playwright show-report)",
+      "Bash(npx playwright test:*)",
+      "Bash(start \"\" \"C:\\\\Users\\\\Mi0sa\\\\playwright\\\\playwright-report\\\\index.html\")",
+      "Bash(npm run e2e:*)",
+      "Bash(start \"\" \"c:\\\\Users\\\\Mi0sa\\\\playwright\\\\playwright-report\\\\index.html\")",
+      "WebFetch(domain:developer.vasttrafik.se)",
+      "WebFetch(domain:www.clearbyte.org)",
+      "WebFetch(domain:ajanderson.net)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.trafiklab.se)",
+      "WebFetch(domain:ext-api.vasttrafik.se)",
+      "WebFetch(domain:www.planet4.se)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(grep -n \"429\\\\|rate.limit\\\\|throttle\\\\|concurrent\\\\|Promise.all\" /c/Users/Mi0sa/playwright/services/vasttrafik/*.js)"
+    ]
+  }
+}

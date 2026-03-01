@@ -1,0 +1,24 @@
+{
+  "name": "Avgångar — Västtrafik",
+  "short_name": "Avgångar",
+  "description": "Realtidsavgångar från Västtrafik",
+  "start_url": "/avg/",
+  "scope": "/avg/",
+  "display": "standalone",
+  "theme_color": "#0a0f1e",
+  "background_color": "#0a0f1e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/avg/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/avg/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

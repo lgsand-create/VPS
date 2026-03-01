@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0a0f1e"/>
+  <rect x="48" y="48" width="416" height="416" rx="72" fill="#0f1629" stroke="#1e2d56" stroke-width="4"/>
+  <!-- Buss-front -->
+  <rect x="128" y="140" width="256" height="220" rx="32" fill="#162040" stroke="#283d6e" stroke-width="3"/>
+  <!-- Vindruta -->
+  <rect x="152" y="164" width="208" height="80" rx="12" fill="#0a0f1e" stroke="#283d6e" stroke-width="2"/>
+  <!-- Linje-skylt -->
+  <rect x="196" y="178" width="120" height="48" rx="8" fill="#3b9eff"/>
+  <text x="256" y="212" text-anchor="middle" font-family="monospace" font-weight="700" font-size="32" fill="#fff">42</text>
+  <!-- Strålkastare -->
+  <circle cx="176" cy="300" r="20" fill="#3b9eff" opacity="0.8"/>
+  <circle cx="336" cy="300" r="20" fill="#3b9eff" opacity="0.8"/>
+  <!-- Grill -->
+  <rect x="200" y="288" width="112" height="6" rx="3" fill="#283d6e"/>
+  <rect x="200" y="302" width="112" height="6" rx="3" fill="#283d6e"/>
+  <!-- Hjul -->
+  <circle cx="184" cy="372" r="24" fill="#0a0f1e" stroke="#283d6e" stroke-width="3"/>
+  <circle cx="184" cy="372" r="10" fill="#283d6e"/>
+  <circle cx="328" cy="372" r="24" fill="#0a0f1e" stroke="#283d6e" stroke-width="3"/>
+  <circle cx="328" cy="372" r="10" fill="#283d6e"/>
+  <!-- Klocka (bevakning) -->
+  <circle cx="400" cy="120" r="44" fill="#0f1629" stroke="#3b9eff" stroke-width="3"/>
+  <circle cx="400" cy="120" r="36" fill="#162040"/>
+  <line x1="400" y1="120" x2="400" y2="96" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
+  <line x1="400" y1="120" x2="416" y2="128" stroke="#3b9eff" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="400" cy="120" r="3" fill="#fff"/>
+</svg>

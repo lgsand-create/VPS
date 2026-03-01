@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+services/node_modules/
+
+# Environment / secrets
+.env
+services/.env
+
+# Auth sessions (Playwright)
+tests/.auth/
+
+# Playwright test output (VSCode + CLI)
+test-results/
+test-output/
+playwright-report/
+blob-report/
+
+# Scrapad data (datumstämplad, genereras av scrapers/import)
+data/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+nul
+
+# SFTP config (contains server IP)
+.vscode/sftp.json
+
+# Playwright binary reports
+pw-report-raw.bin

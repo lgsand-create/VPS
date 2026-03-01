@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0f1e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Compuna Monitor">
+  <title>Compuna Monitor</title>
+  <link rel="manifest" href="/app/manifest.json">
+  <link rel="apple-touch-icon" href="/app/icons/icon-192.png">
+  <link rel="icon" href="/app/icons/icon-192.png">
+  <link rel="stylesheet" href="/app/app.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- PIN-skärm -->
+    <div id="pin-screen" class="screen active">
+      <div class="pin-container">
+        <div class="pin-logo">
+          <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+            <rect width="64" height="64" rx="10" fill="#162040"/>
+            <path d="M20 32 L28 40 L44 24" stroke="#3b9eff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="pin-title">Compuna Monitor</h1>
+        <p class="pin-subtitle">Ange PIN för att logga in</p>
+        <div id="pin-dots" class="pin-dots">
+          <span class="pin-dot"></span>
+          <span class="pin-dot"></span>
+          <span class="pin-dot"></span>
+          <span class="pin-dot"></span>
+        </div>
+        <input type="text" id="pin-input" inputmode="numeric" pattern="[0-9]*"
+               maxlength="4" autocomplete="off" class="pin-hidden-input">
+        <div id="pin-error" class="pin-error"></div>
+      </div>
+    </div>
+
+    <!-- Sajt-lista -->
+    <div id="sites-screen" class="screen">
+      <header class="app-header">
+        <h1>Compuna Monitor</h1>
+        <button id="refresh-btn" class="header-btn" onclick="refreshSites()" title="Uppdatera">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+        <button class="header-btn" onclick="toggleSettings()" title="Inställningar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </header>
+      <div id="sync-bar" class="sync-bar"></div>
+      <div id="sites-list" class="sites-list">
+        <div class="loading">Laddar sajter...</div>
+      </div>
+    </div>
+
+    <!-- Sajt-detalj -->
+    <div id="detail-screen" class="screen">
+      <header class="app-header">
+        <button class="header-btn back-btn" onclick="showSites()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+        <div class="header-title">
+          <h1 id="detail-name"></h1>
+          <div id="detail-url" class="header-subtitle"></div>
+        </div>
+        <button class="header-btn" onclick="refreshDetail()" title="Uppdatera">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6M1 20v-6h6"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+        </button>
+        <button class="header-btn" onclick="toggleSettings()" title="Inställningar">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </header>
+      <div id="detail-sync-bar" class="sync-bar"></div>
+      <div id="detail-content" class="detail-content">
+        <div class="loading">Laddar...</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Info-modal (check-beskrivningar) -->
+  <div id="info-modal-overlay" class="info-modal-overlay hidden" onclick="if(event.target===this)closeCheckInfo()">
+    <div id="info-modal" class="info-modal"></div>
+  </div>
+
+  <!-- Inställningar-panel -->
+  <div id="settings-overlay" class="settings-overlay hidden" onclick="closeSettings(event)">
+    <div class="settings-panel">
+      <div class="settings-header">
+        <h2>Inställningar</h2>
+        <button class="header-btn" onclick="toggleSettings()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="settings-body">
+        <div class="settings-item">
+          <div class="settings-label">Version</div>
+          <div class="settings-value" id="settings-version">1.0.0</div>
+        </div>
+        <button class="settings-action" onclick="forceSwUpdate()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/>
+          </svg>
+          Uppdatera appen
+        </button>
+        <button id="settings-install" class="settings-action" onclick="installFromSettings()" style="display:none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Installera på hemskärmen
+        </button>
+        <button class="settings-action settings-logout" onclick="logout()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          Logga ut
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Installationsprompt -->
+  <div id="install-banner" class="install-banner hidden">
+    <div class="install-content">
+      <div class="install-icon">
+        <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
+          <rect width="64" height="64" rx="10" fill="#162040"/>
+          <path d="M20 32 L28 40 L44 24" stroke="#3b9eff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="install-text">
+        <strong>Installera Compuna Monitor</strong>
+        <span>Lägg till på hemskärmen för snabb åtkomst</span>
+      </div>
+    </div>
+    <div class="install-actions">
+      <button id="install-dismiss" class="install-btn-dismiss">Senare</button>
+      <button id="install-accept" class="install-btn-accept">Installera</button>
+    </div>
+  </div>
+
+  <!-- Offline-banner -->
+  <div id="offline-banner" class="offline-banner hidden">
+    Offline — visar cachad data
+  </div>
+
+  <script src="/app/app.js"></script>
+</body>
+</html>

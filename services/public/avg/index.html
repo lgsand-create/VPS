@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0f1e">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Avgångar">
+  <title>Avgångar</title>
+  <link rel="manifest" href="/avg/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/avg/icons/icon.svg">
+  <link rel="apple-touch-icon" id="apple-icon" href="/avg/icons/icon.svg">
+  <link rel="stylesheet" href="/avg/avg.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- Avgångstavla (default) -->
+    <div id="board-screen">
+      <header class="app-header">
+        <h1>Avgångar</h1>
+        <button class="header-btn" onclick="toggleSettings()" aria-label="Inställningar">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+      </header>
+
+      <div class="stop-tabs" id="stop-tabs"></div>
+
+      <div class="sync-bar" id="sync-bar">Laddar...</div>
+
+      <div class="departure-list" id="departure-list">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <!-- Inställningar (overlay) -->
+    <div id="settings-overlay" class="settings-overlay hidden" onclick="if(event.target===this)toggleSettings()">
+      <div class="settings-panel">
+        <div class="settings-header">
+          <h2>Inställningar</h2>
+          <button class="header-btn" onclick="toggleSettings()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div class="settings-group hidden" id="settings-install">
+          <div class="settings-group-title">App</div>
+          <div class="settings-item" id="install-btn-row">
+            <span class="settings-label">Installera på hemskärmen</span>
+            <button class="settings-action-btn" onclick="installApp()">Installera</button>
+          </div>
+          <div class="settings-item hidden" id="ios-install-guide" style="flex-direction:column;align-items:flex-start;">
+            <span class="settings-label">Lägg till på hemskärmen</span>
+            <span class="settings-label" style="font-size:0.78rem;color:var(--gray-500);margin-top:0.3rem;line-height:1.5;">Tryck på <svg style="vertical-align:middle" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> i menyraden och välj <strong style="color:var(--gray-300)">"Lägg till på hemskärmen"</strong></span>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-title">Notiser</div>
+          <div class="settings-item">
+            <span class="settings-label">Push-notiser</span>
+            <button class="toggle" id="notif-toggle" onclick="toggleNotifications()"></button>
+          </div>
+          <div id="notif-status" class="notif-status hidden"></div>
+          <div class="settings-item" style="flex-direction:column;align-items:stretch;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:0.3rem;">
+              <span class="settings-label">Förseningströskel</span>
+              <span class="settings-value" id="threshold-value">3 min</span>
+            </div>
+            <input type="range" class="threshold-slider" id="threshold-slider"
+                   min="1" max="10" value="3" step="1"
+                   oninput="updateThreshold(this.value)">
+          </div>
+          <div class="settings-item" style="flex-direction:column;align-items:flex-start;">
+            <span class="settings-label" style="margin-bottom:0.2rem;">Bevaka avgångar</span>
+            <span style="font-size:0.78rem;color:var(--gray-500);line-height:1.5;">Tryck <svg style="vertical-align:middle" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg> på en avgång — du får notis om den blir försenad</span>
+          </div>
+          <div class="settings-item hidden" id="watched-list-container" style="flex-direction:column;align-items:stretch;">
+            <span class="settings-label" style="margin-bottom:0.3rem;">Bevakade just nu</span>
+            <div id="watched-list"></div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-title">Hållplatser</div>
+          <div class="stop-search-container">
+            <input type="text" id="stop-search-input"
+                   class="stop-search-input"
+                   placeholder="Sök hållplats..."
+                   autocomplete="off"
+                   oninput="onStopSearch(this.value)">
+            <div id="stop-search-results" class="stop-search-results hidden"></div>
+          </div>
+          <div id="custom-stops-list"></div>
+          <div id="preset-stops-divider" class="settings-group-title hidden" style="margin-top:0.8rem;color:var(--gray-500);font-size:0.6rem">FÖRINSTÄLLDA</div>
+          <div id="settings-stops-list"></div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-group-title">Om</div>
+          <div class="settings-item">
+            <span class="settings-label">Version</span>
+            <span class="settings-value">1.5</span>
+          </div>
+          <div class="settings-item">
+            <span class="settings-label">Compuna AB</span>
+            <span class="settings-value" style="font-family:var(--font-sans);font-weight:400">compuna.se</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notis-tillstånd prompt -->
+    <div id="notif-prompt-overlay" class="notif-prompt-overlay hidden" onclick="if(event.target===this)closeNotifPrompt()">
+      <div class="notif-prompt-sheet">
+        <div class="notif-prompt-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        </div>
+        <h3>Aktivera notiser</h3>
+        <p>Få en push-notis direkt i telefonen om din buss eller spårvagn är försenad.</p>
+        <p class="notif-prompt-hint">Du kan stänga av det när som helst i inställningarna.</p>
+        <div class="notif-prompt-actions">
+          <button class="notif-prompt-btn secondary" onclick="closeNotifPrompt()">Inte nu</button>
+          <button class="notif-prompt-btn primary" id="notif-confirm-btn" onclick="confirmEnableNotifs()">Tillåt notiser</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Linjehistorik overlay -->
+    <div id="history-overlay" class="history-overlay hidden" onclick="if(event.target===this)closeHistory()">
+      <div class="history-sheet">
+        <div class="history-header">
+          <h2>Linje <span id="history-line-name"></span></h2>
+          <button class="header-btn" onclick="closeHistory()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div id="history-content"></div>
+      </div>
+    </div>
+
+    <!-- Install banner -->
+    <div id="install-banner" class="install-banner hidden">
+      <div style="display:flex;align-items:center;gap:0.8rem;">
+        <div style="font-size:2rem;">&#128652;</div>
+        <div>
+          <strong style="color:#fff">Installera Avgångar</strong><br>
+          <span style="font-size:0.85rem;color:var(--gray-400)">Snabb åtkomst från hemskärmen</span>
+        </div>
+      </div>
+      <div class="install-actions">
+        <button class="install-btn secondary" onclick="dismissInstall()">Inte nu</button>
+        <button class="install-btn primary" onclick="installApp()">Installera</button>
+      </div>
+    </div>
+
+    <!-- iOS install banner -->
+    <div id="ios-install-banner" class="install-banner hidden">
+      <div style="display:flex;align-items:center;gap:0.8rem;">
+        <div style="font-size:2rem;">&#128652;</div>
+        <div>
+          <strong style="color:#fff">Installera Avgångar</strong><br>
+          <span style="font-size:0.85rem;color:var(--gray-400)">Tryck på <svg style="vertical-align:middle" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> och <strong>"Lägg till på hemskärmen"</strong></span>
+        </div>
+      </div>
+      <div class="install-actions">
+        <button class="install-btn secondary" onclick="dismissInstall()">OK</button>
+      </div>
+    </div>
+
+    <!-- Offline banner -->
+    <div id="offline-banner" class="offline-banner hidden">Offline — visar cachad data</div>
+  </div>
+
+  <script src="/avg/avg.js"></script>
+  <script>
+    // Generera PNG apple-touch-icon från SVG (iOS kräver PNG)
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = 180; c.height = 180;
+        c.getContext('2d').drawImage(img, 0, 0, 180, 180);
+        const link = document.getElementById('apple-icon');
+        if (link) link.href = c.toDataURL('image/png');
+      };
+      img.src = '/avg/icons/icon.svg';
+    }
+  </script>
+</body>
+</html>

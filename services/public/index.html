@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0f1e">
+  <title>Compuna Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/css/dashboard.css?v=3.0">
+</head>
+<body>
+  <!-- Login-overlay (visas tills användaren loggar in) -->
+  <div class="login-overlay" id="login-overlay">
+    <div class="login-box">
+      <h1>Compuna Hub</h1>
+      <div class="subtitle">Logga in för att fortsätta</div>
+      <form onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label for="login-user">Användarnamn</label>
+          <input type="text" id="login-user" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label for="login-pass">Lösenord</label>
+          <input type="password" id="login-pass" autocomplete="current-password" required>
+        </div>
+        <button type="submit" class="btn-login" id="login-btn">Logga in</button>
+      </form>
+      <div class="login-error" id="login-error"></div>
+    </div>
+  </div>
+
+  <header>
+    <h1 onclick="navigate('')">Compuna Hub</h1>
+    <span class="badge" id="version-badge">v2.3</span>
+    <span class="breadcrumb" id="breadcrumb"></span>
+    <div class="nav-links">
+      <button class="nav-btn" id="nav-tools" onclick="navigate('tools')">Verktyg</button>
+      <button class="nav-btn" id="nav-settings" onclick="navigate('settings')">&#9881; Inställningar</button>
+      <button class="nav-btn" id="nav-logout" onclick="handleLogout()" style="display:none;opacity:0.7">Logga ut</button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- ==================== HUB: Översikt ==================== -->
+    <div id="view-hub" class="view active">
+      <section>
+        <h2>Sajter</h2>
+        <div class="project-grid" id="monitor-grid"></div>
+      </section>
+
+      <section>
+        <h2>Maskiner</h2>
+        <div class="project-grid" id="machine-grid"></div>
+      </section>
+
+      <section>
+        <h2>Projekt</h2>
+        <div class="project-grid" id="project-grid"></div>
+      </section>
+
+      <!-- CRON-körningar och API-testare visas i projektvy istället -->
+    </div>
+
+    <!-- ==================== PROJEKT: Detaljvy ==================== -->
+    <div id="view-project" class="view">
+      <div style="margin-bottom: 1rem;">
+        <button class="back-btn" onclick="navigate('')">Tillbaka till hub</button>
+      </div>
+
+      <section>
+        <h2>Statistik</h2>
+        <div class="grid" id="project-stats-grid">
+          <div class="card"><h3>Laddar...</h3><div class="value">—</div></div>
+        </div>
+      </section>
+
+      <section id="project-teams-section" style="display:none">
+        <h2>Lag <span id="project-teams-count" style="font-size:0.85rem;color:#6b7280"></span></h2>
+        <div id="project-teams-grid" class="teams-grid"></div>
+      </section>
+
+      <section>
+        <h2>CRON-schema</h2>
+        <div id="project-schedules"><div class="card"><div class="sub">Laddar scheman...</div></div></div>
+      </section>
+
+      <section>
+        <h2>CRON-körningar</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Tid</th>
+              <th>Schema</th>
+              <th>Status</th>
+              <th>Poster</th>
+              <th>Längd</th>
+              <th>Fel</th>
+            </tr>
+          </thead>
+          <tbody id="project-cron-body">
+            <tr><td colspan="6">Laddar...</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Senaste ändringar</h2>
+        <div id="project-changes-empty" style="display:none" class="card">
+          <div class="sub">Inga ändringar registrerade ännu.</div>
+        </div>
+        <table id="project-changes-table" style="display:none">
+          <thead>
+            <tr>
+              <th>Upptäckt</th>
+              <th>Ryttare</th>
+              <th>Kurs</th>
+              <th>Vecka</th>
+              <th>Fält</th>
+              <th>Gammalt</th>
+              <th>Nytt</th>
+            </tr>
+          </thead>
+          <tbody id="project-changes-body"></tbody>
+        </table>
+      </section>
+
+      <section id="activity-viewer-section" style="display:none">
+        <h2>Aktivitetsvy</h2>
+        <div class="activity-viewer">
+          <div class="activity-viewer-controls">
+            <div class="av-form-row">
+              <div class="av-form-group">
+                <label for="av-team-filter">Lag</label>
+                <select id="av-team-filter"><option value="">Alla lag</option></select>
+              </div>
+              <div class="av-form-group av-form-group--wide">
+                <label for="av-activity-select">Aktivitet</label>
+                <select id="av-activity-select"><option value="">Välj aktivitet...</option></select>
+              </div>
+            </div>
+          </div>
+          <div id="av-activity-info" style="display:none"></div>
+          <div id="av-attendance-table" style="display:none"></div>
+          <div id="av-changes" style="display:none"></div>
+          <div id="av-json" style="display:none"></div>
+        </div>
+      </section>
+
+      <section id="bgcheck-log-section" style="display:none">
+        <h2>Verifieringslogg</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Tidpunkt</th>
+              <th>Ärende</th>
+              <th>Resultat</th>
+              <th>Verifikations-ID</th>
+              <th>Svarstid</th>
+              <th>Varningar</th>
+            </tr>
+          </thead>
+          <tbody id="bgcheck-log-body">
+            <tr><td colspan="6">Laddar...</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="article-viewer-section" style="display:none">
+        <h2>Artiklar i databasen</h2>
+        <div class="activity-viewer">
+          <div class="activity-viewer-controls">
+            <div class="av-form-row">
+              <div class="av-form-group av-form-group--wide">
+                <label for="nv-search">Sök</label>
+                <input type="text" id="nv-search" placeholder="Sök rubrik eller text...">
+              </div>
+              <div class="av-form-group av-form-group--wide">
+                <label for="nv-article-select">Artikel</label>
+                <select id="nv-article-select"><option value="">Välj artikel...</option></select>
+              </div>
+            </div>
+          </div>
+          <div id="nv-article-detail" style="display:none"></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>API-testare</h2>
+        <div class="api-tester">
+          <div class="endpoint-list" id="project-endpoints"></div>
+          <div class="url-bar">
+            <input type="text" id="project-url-input" value="" placeholder="/api/...">
+            <button onclick="fetchApi('project')">Skicka</button>
+          </div>
+          <div id="project-response">Välj ett endpoint ovan</div>
+          <div class="time" id="project-response-time"></div>
+        </div>
+      </section>
+
+      <section id="project-docs-section" style="display:none">
+        <div class="docs-toggle" onclick="toggleDocs()">
+          <span class="arrow">&#9654;</span>
+          <h2>API-dokumentation</h2>
+        </div>
+        <div class="docs-body" id="project-docs-body">
+          <div class="docs-container" id="project-docs-content">Laddar dokumentation...</div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ==================== MONITOR: Sajt-detalj ==================== -->
+    <div id="view-monitor-site" class="view">
+      <div style="margin-bottom: 1rem;">
+        <button class="back-btn" onclick="navigate('')">Tillbaka till hub</button>
+      </div>
+
+      <h2 id="monitor-site-title">Sajt</h2>
+      <p id="monitor-site-url" style="color:#888;font-size:0.9rem;margin-bottom:1rem;"></p>
+
+      <!-- Uptime-kort — alltid synliga -->
+      <section>
+        <div class="uptime-cards-grid" id="monitor-uptime-cards"></div>
+      </section>
+
+      <!-- Tab-navigation -->
+      <div class="site-tabs" id="monitor-site-tabs">
+        <button class="site-tab active" data-tab="tab-monitor" onclick="switchSiteTab('tab-monitor')">Övervakning</button>
+        <button class="site-tab" data-tab="tab-charts" onclick="switchSiteTab('tab-charts')">Grafer</button>
+        <button class="site-tab" data-tab="tab-tools" onclick="switchSiteTab('tab-tools')">Verktyg</button>
+        <button class="site-tab" data-tab="tab-settings" onclick="switchSiteTab('tab-settings')">Inställningar</button>
+      </div>
+
+      <!-- Tab: Övervakning -->
+      <div class="site-tab-content active" id="tab-monitor">
+        <section>
+          <h2>Senaste check per typ</h2>
+          <div class="check-grid" id="monitor-checks-grid"></div>
+        </section>
+
+        <section id="monitor-security-status-section">
+          <h2>Skyddsstatus</h2>
+          <div id="monitor-security-status" class="check-grid"></div>
+        </section>
+
+        <section>
+          <h2>Öppna incidenter</h2>
+          <div id="monitor-incidents-list"></div>
+        </section>
+
+        <section id="monitor-health-details-section" style="display:none;">
+          <h2>Health-detaljer</h2>
+          <div id="monitor-health-details"></div>
+        </section>
+      </div>
+
+      <!-- Tab: Grafer -->
+      <div class="site-tab-content" id="tab-charts">
+        <section>
+          <h2>Svarstid (senaste 24h)</h2>
+          <div id="monitor-response-chart" class="chart-container"></div>
+        </section>
+
+        <section id="monitor-uptime-chart-section" style="display:none;">
+          <h2>Uptime (senaste 30 dagar)</h2>
+          <div id="monitor-uptime-chart" class="chart-container"></div>
+        </section>
+
+        <section id="monitor-deep-chart-section" style="display:none;">
+          <h2>Deep Test — Total tid</h2>
+          <div id="monitor-deep-chart" class="chart-container"></div>
+        </section>
+      </div>
+
+      <!-- Tab: Verktyg -->
+      <div class="site-tab-content" id="tab-tools">
+        <section>
+          <div id="monitor-site-tools" class="tools-grid"></div>
+          <div id="monitor-site-tools-result" style="display:none;"></div>
+        </section>
+
+        <section>
+          <div class="docs-toggle" onclick="toggleRawChecks()">
+            <span class="arrow" id="raw-checks-arrow">&#9654;</span>
+            <h2>Rådata — senaste checks</h2>
+          </div>
+          <div id="monitor-raw-checks" class="raw-checks-body" style="display:none;"></div>
+        </section>
+      </div>
+
+      <!-- Tab: Inställningar -->
+      <div class="site-tab-content" id="tab-settings">
+        <section>
+          <div id="monitor-site-settings" class="form-section"></div>
+          <div id="monitor-site-settings-feedback" style="display:none;"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ==================== MONITOR: Maskin-detalj ==================== -->
+    <div id="view-machine" class="view">
+      <div style="margin-bottom: 1rem;">
+        <button class="back-btn" onclick="navigate('')">Tillbaka till hub</button>
+      </div>
+
+      <h2 id="machine-title">Maskin</h2>
+      <p id="machine-desc" style="color:#888;font-size:0.9rem;margin-bottom:1rem;"></p>
+
+      <!-- Gauge-kort: CPU, RAM, Disk, Uptime -->
+      <section>
+        <div class="machine-gauges" id="machine-gauges"></div>
+      </section>
+
+      <!-- Uptime-kort -->
+      <section>
+        <div class="uptime-cards-grid" id="machine-uptime-cards"></div>
+      </section>
+
+      <!-- Tab-navigation -->
+      <div class="site-tabs" id="machine-tabs">
+        <button class="site-tab active" data-tab="tab-machine-monitor" onclick="switchMachineTab('tab-machine-monitor')">Övervakning</button>
+        <button class="site-tab" data-tab="tab-machine-charts" onclick="switchMachineTab('tab-machine-charts')">Grafer</button>
+        <button class="site-tab" data-tab="tab-machine-settings" onclick="switchMachineTab('tab-machine-settings')">Inställningar</button>
+      </div>
+
+      <!-- Tab: Övervakning -->
+      <div class="site-tab-content active" id="tab-machine-monitor">
+        <section>
+          <h2>Senaste check per typ</h2>
+          <div class="check-grid" id="machine-checks-grid"></div>
+        </section>
+        <section>
+          <h2>Tjänster</h2>
+          <div id="machine-services-list"></div>
+        </section>
+        <section>
+          <h2>Öppna incidenter</h2>
+          <div id="machine-incidents-list"></div>
+        </section>
+      </div>
+
+      <!-- Tab: Grafer -->
+      <div class="site-tab-content" id="tab-machine-charts">
+        <section>
+          <h2>CPU & RAM (senaste 24h)</h2>
+          <div id="machine-cpu-chart" class="chart-container"></div>
+        </section>
+        <section>
+          <h2>Uptime (senaste 30 dagar)</h2>
+          <div id="machine-uptime-chart" class="chart-container"></div>
+        </section>
+      </div>
+
+      <!-- Tab: Inställningar -->
+      <div class="site-tab-content" id="tab-machine-settings">
+        <section>
+          <div id="machine-settings-form" class="form-section"></div>
+          <div id="machine-settings-feedback" style="display:none;"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ==================== VASTTRAFIK: Detaljvy ==================== -->
+    <div id="view-vasttrafik" class="view">
+      <div style="margin-bottom: 1rem;">
+        <button class="back-btn" onclick="navigate('')">Tillbaka till hub</button>
+      </div>
+
+      <h2>Västtrafik</h2>
+
+      <div class="site-tabs" id="vt-tabs">
+        <button class="site-tab active" data-tab="vt-tab-live" onclick="switchVtTab('vt-tab-live')">Realtid</button>
+        <button class="site-tab" data-tab="vt-tab-stats" onclick="switchVtTab('vt-tab-stats')">Statistik</button>
+        <button class="site-tab" data-tab="vt-tab-stops" onclick="switchVtTab('vt-tab-stops')">Hållplatser</button>
+      </div>
+
+      <div class="site-tab-content active" id="vt-tab-live">
+        <section>
+          <div id="vt-stop-tabs" style="display:flex;gap:0.4rem;margin-bottom:1rem;flex-wrap:wrap;"></div>
+          <div id="vt-departures-board"><div class="card"><div class="sub">Laddar avgångar...</div></div></div>
+          <div id="vt-last-updated" style="font-size:0.75rem;color:#64748b;text-align:center;margin-top:0.5rem;font-family:var(--font-mono)"></div>
+        </section>
+      </div>
+
+      <div class="site-tab-content" id="vt-tab-stats">
+        <section>
+          <h2>Översikt</h2>
+          <div class="grid" id="vt-stats-grid"><div class="card"><h3>Laddar...</h3><div class="sub">—</div></div></div>
+        </section>
+        <section>
+          <h2>Förseningar per linje och hållplats (senaste 7 dagar)</h2>
+          <div id="vt-delay-by-line"></div>
+        </section>
+        <section>
+          <h2>Punktlighet per hållplats</h2>
+          <div id="vt-delay-by-stop"></div>
+        </section>
+        <section>
+          <h2>Trend — Genomsnittlig försening</h2>
+          <div id="vt-delay-trend"></div>
+        </section>
+        <section>
+          <h2>Populära favorithållplatser (PWA)</h2>
+          <p class="sub" style="margin-bottom:0.5rem">Hållplatser som användare lagt till via sökfunktionen</p>
+          <div id="vt-stop-favorites"><div class="card"><div class="sub">Laddar...</div></div></div>
+        </section>
+      </div>
+
+      <div class="site-tab-content" id="vt-tab-stops">
+        <section>
+          <h2>Bevakade hållplatser</h2>
+          <div id="vt-stops-list"><div class="card"><div class="sub">Laddar...</div></div></div>
+        </section>
+        <section>
+          <h2>Lägg till hållplats</h2>
+          <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+            <input type="text" id="vt-search-input" placeholder="Sök hållplats..." style="flex:1" onkeydown="if(event.key==='Enter')addVtStop()">
+            <button class="btn-primary" onclick="addVtStop()">Sök</button>
+          </div>
+          <div id="vt-search-results"></div>
+        </section>
+        <section>
+          <h2>API-anslutning</h2>
+          <div style="display:flex;gap:0.5rem;align-items:center">
+            <button class="btn-primary" id="vt-test-api-btn" onclick="testVtApi()">Testa API</button>
+            <span id="vt-test-api-result" style="display:none;font-size:0.85rem"></span>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ==================== SPORTANALYS: Detaljvy ==================== -->
+    <div id="view-sportanalys" class="view">
+      <div style="margin-bottom: 1rem;">
+        <button class="back-btn" onclick="navigate('')">Tillbaka till hub</button>
+      </div>
+
+      <h2>Sportanalys</h2>
+
+      <div class="site-tabs" id="sa-tabs">
+        <button class="site-tab active" data-tab="sa-tab-dashboard" onclick="switchSaTab('sa-tab-dashboard')">Dashboard</button>
+        <button class="site-tab" data-tab="sa-tab-upload" onclick="switchSaTab('sa-tab-upload')">Ladda upp</button>
+        <button class="site-tab" data-tab="sa-tab-jobs" onclick="switchSaTab('sa-tab-jobs')">Jobb</button>
+        <button class="site-tab" data-tab="sa-tab-diag" onclick="switchSaTab('sa-tab-diag')">Diagnostik</button>
+      </div>
+
+      <!-- Tab: Dashboard -->
+      <div class="site-tab-content active" id="sa-tab-dashboard">
+        <section>
+          <div class="grid" id="sa-stats-grid">
+            <div class="card"><h3>Laddar...</h3><div class="sub">&mdash;</div></div>
+          </div>
+        </section>
+        <section>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+            <h2>Senaste jobb</h2>
+            <button class="btn-small btn-primary" onclick="loadSaRecentJobs()">Uppdatera</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Match</th><th>Datum</th><th>Status</th><th>Fil</th><th></th></tr>
+            </thead>
+            <tbody id="sa-recent-jobs"><tr><td colspan="6">Laddar...</td></tr></tbody>
+          </table>
+        </section>
+      </div>
+
+      <!-- Tab: Upload -->
+      <div class="site-tab-content" id="sa-tab-upload">
+        <section>
+          <h2>Ladda upp video</h2>
+          <div id="sa-upload-zone" style="border:2px dashed var(--navy-600);border-radius:8px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all 0.2s;margin-bottom:1rem">
+            <div style="font-size:2rem;margin-bottom:0.5rem">&#127909;</div>
+            <p>Dra och sl&auml;pp en videofil h&auml;r</p>
+            <p class="sub">eller klicka f&ouml;r att v&auml;lja fil (mp4, mov, avi, webm &mdash; max 5 GB)</p>
+            <div id="sa-file-info" style="display:none;margin-top:0.75rem"></div>
+            <input type="file" id="sa-file-input" accept="video/mp4,video/quicktime,video/x-msvideo,video/webm" style="display:none">
+          </div>
+        </section>
+        <section>
+          <h2>Matchinfo</h2>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+            <div class="form-group">
+              <label>Hemmalag</label>
+              <input type="text" id="sa-input-home" placeholder="t.ex. Backatorp IF">
+            </div>
+            <div class="form-group">
+              <label>Bortalag</label>
+              <input type="text" id="sa-input-away" placeholder="t.ex. IFK G&ouml;teborg">
+            </div>
+            <div class="form-group">
+              <label>Matchdatum</label>
+              <input type="date" id="sa-input-date">
+            </div>
+            <div class="form-group">
+              <label>Halvlek</label>
+              <select id="sa-input-half">
+                <option value="1">1:a halvlek</option>
+                <option value="2">2:a halvlek</option>
+                <option value="full">Hel match</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top:1rem">
+            <button class="btn-primary" id="sa-btn-upload" onclick="startSaUpload()">Starta uppladdning</button>
+          </div>
+        </section>
+        <section id="sa-upload-progress" style="display:none">
+          <h2 id="sa-upload-status-text">Laddar upp...</h2>
+          <div style="background:var(--navy-800);border-radius:20px;height:8px;overflow:hidden;margin:0.5rem 0">
+            <div id="sa-progress-bar" style="height:100%;background:var(--accent);border-radius:20px;width:0%;transition:width 0.3s"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:var(--navy-400)">
+            <span id="sa-upload-size">0 MB / 0 MB</span>
+            <span id="sa-upload-percent">0%</span>
+          </div>
+        </section>
+      </div>
+
+      <!-- Tab: Jobb -->
+      <div class="site-tab-content" id="sa-tab-jobs">
+        <section>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;flex-wrap:wrap;gap:0.5rem">
+            <h2>Alla jobb</h2>
+            <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+              <button class="btn-small sa-filter active" data-filter="all" onclick="filterSaJobs('all')">Alla</button>
+              <button class="btn-small sa-filter" data-filter="pending" onclick="filterSaJobs('pending')">V&auml;ntande</button>
+              <button class="btn-small sa-filter" data-filter="processing" onclick="filterSaJobs('processing')">Bearbetar</button>
+              <button class="btn-small sa-filter" data-filter="done" onclick="filterSaJobs('done')">Klara</button>
+              <button class="btn-small sa-filter" data-filter="failed" onclick="filterSaJobs('failed')">Misslyckade</button>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Match</th><th>Datum</th><th>Halvlek</th><th>Status</th><th>Progress</th><th></th></tr>
+            </thead>
+            <tbody id="sa-jobs-table"><tr><td colspan="7">Laddar...</td></tr></tbody>
+          </table>
+        </section>
+        <!-- Jobbdetaljer (visas inline vid klick) -->
+        <section id="sa-detail-section" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+            <h2 id="sa-detail-title">Jobbdetaljer</h2>
+            <button class="btn-small" onclick="document.getElementById('sa-detail-section').style.display='none'">St&auml;ng</button>
+          </div>
+          <div class="grid" id="sa-detail-grid"></div>
+        </section>
+
+        <!-- Analysresultat -->
+        <section id="sa-result-section" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem">
+            <h2 id="sa-result-title">Analysresultat</h2>
+            <button class="btn-small" onclick="document.getElementById('sa-result-section').style.display='none'">St&auml;ng</button>
+          </div>
+          <div class="grid" id="sa-result-meta"></div>
+          <div id="sa-result-stats" style="margin-top:1rem"></div>
+          <div id="sa-result-tracking" style="margin-top:1rem"></div>
+          <div id="sa-result-raw" style="margin-top:1rem"></div>
+        </section>
+      </div>
+
+      <!-- Tab: Diagnostik -->
+      <div class="site-tab-content" id="sa-tab-diag">
+        <section>
+          <h2>Anslutningstest</h2>
+          <p class="sub" style="margin-bottom:1rem">Testa alla steg i kedjan: VPS &rarr; WireGuard &rarr; Backend</p>
+          <button class="btn-primary" id="sa-diag-btn" onclick="runSaDiagnostics()">K&ouml;r diagnostik</button>
+          <div id="sa-diag-results" style="margin-top:1rem"></div>
+        </section>
+
+        <section>
+          <h2>API-endpoints</h2>
+          <p class="sub" style="margin-bottom:1rem">Testa alla endpoints genom hela kedjan (Hub &rarr; Backend)</p>
+          <button class="btn-primary" id="sa-endpoints-btn" onclick="runSaEndpointTests()">Testa alla endpoints</button>
+          <div id="sa-endpoints-results" style="margin-top:1rem"></div>
+          <div style="margin-top:1rem">
+            <p class="sub" style="margin-bottom:0.5rem">Testa enskild endpoint:</p>
+            <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem">
+              <button class="btn-small" onclick="testSaEndpoint('/health', 'GET')">Health</button>
+              <button class="btn-small" onclick="testSaEndpoint('/jobs', 'GET')">Jobs</button>
+              <button class="btn-small" onclick="testSaEndpoint('/jobs/1/status', 'GET')">Status #1</button>
+              <button class="btn-small" onclick="testSaEndpoint('/jobs/1/result', 'GET')">Result #1</button>
+              <button class="btn-small" onclick="testSaEndpoint('/jobs/1/video', 'GET')">Video #1</button>
+              <button class="btn-small" onclick="testSaEndpoint('/annotations/1', 'GET')">Annotations #1</button>
+            </div>
+          </div>
+          <div id="sa-endpoint-result" style="display:none">
+            <pre id="sa-endpoint-json" style="background:var(--navy-800);padding:1rem;border-radius:8px;overflow-x:auto;font-size:0.8rem;line-height:1.5;font-family:var(--font-mono);max-height:400px;overflow-y:auto;border:1px solid var(--border)"></pre>
+          </div>
+        </section>
+
+        <section>
+          <h2>Konfiguration</h2>
+          <div id="sa-diag-config" style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+            <div class="card"><h3>Backend-host</h3><div class="value" style="font-size:0.9rem;font-family:var(--font-mono)">10.10.10.100</div></div>
+            <div class="card"><h3>API-path</h3><div class="value" style="font-size:0.9rem;font-family:var(--font-mono)">/api/</div></div>
+            <div class="card"><h3>Proxy-route</h3><div class="value" style="font-size:0.9rem;font-family:var(--font-mono)">/api/sportanalys/*</div></div>
+            <div class="card"><h3>Timeout</h3><div class="value" style="font-size:0.9rem">10 min (upload)</div></div>
+            <div class="card"><h3>Max filstorlek</h3><div class="value" style="font-size:0.9rem">5 GB</div></div>
+            <div class="card"><h3>Tunnel</h3><div class="value" style="font-size:0.9rem">WireGuard (10.0.0.1 &rarr; 10.0.0.2)</div></div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ==================== MAILWISE: Detaljvy ==================== -->
+    <div id="view-mailwise" class="view">
+      <div style="margin-bottom: 1rem;">
+        <button class="back-btn" onclick="navigate('')">Tillbaka till hub</button>
+      </div>
+
+      <h2>MailWise</h2>
+
+      <div class="site-tabs" id="mw-tabs">
+        <button class="site-tab active" data-tab="mw-tab-dashboard" onclick="switchMwTab('mw-tab-dashboard')">Dashboard</button>
+        <button class="site-tab" data-tab="mw-tab-mailboxes" onclick="switchMwTab('mw-tab-mailboxes')">Brevl&aring;dor</button>
+        <button class="site-tab" data-tab="mw-tab-inbox" onclick="switchMwTab('mw-tab-inbox')">Inkorg</button>
+        <button class="site-tab" data-tab="mw-tab-faq" onclick="switchMwTab('mw-tab-faq')">FAQ</button>
+        <button class="site-tab" data-tab="mw-tab-jobs" onclick="switchMwTab('mw-tab-jobs')">Jobb</button>
+        <button class="site-tab" data-tab="mw-tab-stats" onclick="switchMwTab('mw-tab-stats')">Statistik</button>
+        <button class="site-tab" data-tab="mw-tab-diag" onclick="switchMwTab('mw-tab-diag')">Diagnostik</button>
+      </div>
+
+      <!-- Tab: Dashboard -->
+      <div class="site-tab-content active" id="mw-tab-dashboard">
+        <section>
+          <div class="grid" id="mw-stats-grid">
+            <div class="card"><h3>Laddar...</h3><div class="sub">&mdash;</div></div>
+          </div>
+        </section>
+        <section>
+          <h2>Brevl&aring;dor</h2>
+          <div id="mw-dashboard-mailboxes"><div class="card"><div class="sub">Laddar...</div></div></div>
+        </section>
+      </div>
+
+      <!-- Tab: Brevl&aring;dor -->
+      <div class="site-tab-content" id="mw-tab-mailboxes">
+        <section>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <h2>Gmail-brevl&aring;dor</h2>
+            <button class="btn-primary" onclick="showMwAddMailbox()">+ L&auml;gg till brevl&aring;da</button>
+          </div>
+          <div id="mw-mailbox-list"><div class="card"><div class="sub">Laddar...</div></div></div>
+        </section>
+
+        <!-- Guidad OAuth-setup (dold tills man klickar "L&auml;gg till") -->
+        <div id="mw-setup-wizard" style="display:none">
+          <section>
+            <h2>Anslut Gmail-konto</h2>
+            <div class="card" style="padding:1.5rem">
+              <!-- Steg-indikator -->
+              <div id="mw-setup-steps" style="display:flex;gap:0.5rem;margin-bottom:1.5rem;flex-wrap:wrap">
+                <span class="status-badge ok" id="mw-step-1-badge">1. Gmail API</span>
+                <span class="status-badge info" id="mw-step-2-badge">2. Auth Platform</span>
+                <span class="status-badge info" id="mw-step-3-badge">3. OAuth-klient</span>
+                <span class="status-badge info" id="mw-step-4-badge">4. Anslut</span>
+              </div>
+
+              <!-- Steg 1: Aktivera Gmail API -->
+              <div id="mw-setup-step1" class="mw-step">
+                <h3>Steg 1: Skapa projekt &amp; aktivera Gmail API</h3>
+                <ol style="line-height:1.8;margin:1rem 0">
+                  <li>G&aring; till <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">Google Cloud Console</a></li>
+                  <li>Skapa ett nytt projekt (eller v&auml;lj befintligt) via projekt-v&auml;ljaren h&ouml;gst upp</li>
+                  <li>G&aring; till <a href="https://console.cloud.google.com/apis/library/gmail.googleapis.com" target="_blank" rel="noopener"><strong>APIs &amp; Services &rarr; Enabled APIs &amp; services</strong></a></li>
+                  <li>Klicka <strong>+ ENABLE APIS AND SERVICES</strong>, s&ouml;k <strong>Gmail API</strong> och klicka <strong>Enable</strong></li>
+                </ol>
+                <div style="background:var(--navy-800);padding:0.75rem 1rem;border-radius:6px;font-size:0.85rem;margin-bottom:1rem;color:var(--navy-300)">
+                  <strong>Tips:</strong> N&auml;r Gmail API &auml;r aktiverat, g&aring; till <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener" style="color:var(--primary)"><strong>Google Auth Platform</strong></a> (meny &rarr; &quot;Google Auth Platform&quot;) f&ouml;r att konfigurera OAuth.
+                </div>
+                <button class="btn-primary" onclick="mwSetupNext(2)">N&auml;sta &rarr;</button>
+              </div>
+
+              <!-- Steg 2: Branding + Audience -->
+              <div id="mw-setup-step2" class="mw-step" style="display:none">
+                <h3>Steg 2: Konfigurera Google Auth Platform</h3>
+                <p style="color:var(--navy-300);margin-bottom:0.5rem">I menyn, g&aring; till <a href="https://console.cloud.google.com/auth/overview" target="_blank" rel="noopener" style="color:var(--primary)"><strong>Google Auth Platform</strong></a>.</p>
+                <ol style="line-height:1.8;margin:1rem 0">
+                  <li><strong>Branding</strong> &mdash; Fyll i appnamn: <code>MailWise</code>, din e-post som kontakt</li>
+                  <li><strong>Audience</strong> &mdash; V&auml;lj <strong>External</strong>. Appen blir i &quot;Testing&quot;-l&auml;ge</li>
+                  <li><strong>Audience &rarr; Test users</strong> &mdash; L&auml;gg till de Gmail-adresser du vill ansluta som testanv&auml;ndare</li>
+                  <li><strong>Data access</strong> &mdash; Klicka <strong>Add or remove scopes</strong>, s&ouml;k <code>gmail.readonly</code> och bocka i den</li>
+                </ol>
+                <div style="background:var(--navy-800);padding:0.75rem 1rem;border-radius:6px;font-size:0.85rem;margin-bottom:1rem;color:var(--navy-300)">
+                  <strong>Viktigt:</strong> Alla Gmail-konton du vill ansluta m&aring;ste l&auml;ggas till som testanv&auml;ndare s&aring; l&auml;nge appen &auml;r i &quot;Testing&quot;-l&auml;ge.
+                </div>
+                <button class="btn-small" onclick="mwSetupNext(1)">&larr; Tillbaka</button>
+                <button class="btn-primary" onclick="mwSetupNext(3)">N&auml;sta &rarr;</button>
+              </div>
+
+              <!-- Steg 3: Skapa Client (OAuth-klient) -->
+              <div id="mw-setup-step3" class="mw-step" style="display:none">
+                <h3>Steg 3: Skapa OAuth-klient</h3>
+                <p style="color:var(--navy-300);margin-bottom:0.5rem">Fortfarande i <strong>Google Auth Platform</strong>:</p>
+                <ol style="line-height:1.8;margin:1rem 0">
+                  <li>G&aring; till <strong>Clients</strong> i v&auml;nstermenyn</li>
+                  <li>Klicka <strong>+ CREATE CLIENT</strong></li>
+                  <li>V&auml;lj typ: <strong>Web application</strong></li>
+                  <li>Ge den ett namn (t.ex. <code>MailWise VPS</code>)</li>
+                  <li>Under <strong>Authorized redirect URIs</strong>, klicka <strong>+ ADD URI</strong> och klistra in:</li>
+                </ol>
+                <div style="background:var(--navy-800);padding:0.75rem 1rem;border-radius:6px;font-family:var(--font-mono);font-size:0.85rem;margin-bottom:1rem;word-break:break-all" id="mw-redirect-uri-display">
+                  Laddar...
+                </div>
+                <div style="background:var(--navy-800);padding:0.75rem 1rem;border-radius:6px;font-size:0.85rem;margin-bottom:1rem;color:var(--navy-300)">
+                  <strong>Efter att du skapat klienten</strong> visas <strong>Client ID</strong> och <strong>Client secret</strong>. Kopiera b&aring;da &mdash; du beh&ouml;ver dem i n&auml;sta steg. Du kan &auml;ven hitta dem senare under <strong>Clients &rarr; klicka p&aring; klienten</strong>.
+                </div>
+                <button class="btn-small" onclick="mwSetupNext(2)">&larr; Tillbaka</button>
+                <button class="btn-primary" onclick="mwSetupNext(4)">N&auml;sta &rarr;</button>
+              </div>
+
+              <!-- Steg 4: Fyll i credentials -->
+              <div id="mw-setup-step4" class="mw-step" style="display:none">
+                <h3>Steg 4: Klistra in uppgifter fr&aring;n Google Auth Platform</h3>
+                <p style="color:var(--navy-300);margin-bottom:0.5rem">Klistra in <strong>Client ID</strong> och <strong>Client secret</strong> fr&aring;n f&ouml;reg&aring;ende steg.</p>
+                <div style="display:grid;gap:0.75rem;max-width:500px;margin:1rem 0">
+                  <div>
+                    <label style="font-size:0.85rem;color:var(--navy-300)">Client ID</label>
+                    <input type="text" id="mw-setup-client-id" placeholder="xxxxxxx.apps.googleusercontent.com" style="width:100%">
+                  </div>
+                  <div>
+                    <label style="font-size:0.85rem;color:var(--navy-300)">Client Secret</label>
+                    <input type="password" id="mw-setup-client-secret" placeholder="GOCSPX-xxxxxxxx" style="width:100%">
+                  </div>
+                  <div>
+                    <label style="font-size:0.85rem;color:var(--navy-300)">Beskrivning (valfritt)</label>
+                    <input type="text" id="mw-setup-display-name" placeholder="t.ex. Support-brevl&aring;da" style="width:100%">
+                  </div>
+                </div>
+                <div id="mw-setup-error" style="display:none;color:var(--error);margin-bottom:0.5rem"></div>
+                <button class="btn-small" onclick="mwSetupNext(3)">&larr; Tillbaka</button>
+                <button class="btn-primary" id="mw-setup-connect-btn" onclick="mwConnectMailbox()">Anslut Gmail-konto</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Tab: Inkorg -->
+      <div class="site-tab-content" id="mw-tab-inbox">
+        <section>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem">
+            <h2>Inkorg</h2>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+              <select id="mw-inbox-mailbox" onchange="loadMwInbox()" style="min-width:150px">
+                <option value="">Alla brevl&aring;dor</option>
+              </select>
+              <select id="mw-inbox-category" onchange="loadMwInbox()">
+                <option value="">Alla kategorier</option>
+                <option value="inquiry">F&ouml;rfr&aring;gan</option>
+                <option value="complaint">Klagom&aring;l</option>
+                <option value="order">Best&auml;llning</option>
+                <option value="support">Support</option>
+                <option value="billing">Faktura</option>
+                <option value="feedback">Feedback</option>
+                <option value="info">Information</option>
+                <option value="other">&Ouml;vrigt</option>
+              </select>
+              <select id="mw-inbox-priority" onchange="loadMwInbox()">
+                <option value="">Alla prioriteter</option>
+                <option value="urgent">Brådskande</option>
+                <option value="high">Hög</option>
+                <option value="normal">Normal</option>
+                <option value="low">Låg</option>
+              </select>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Datum</th><th>Fr&aring;n</th><th>&Auml;mne</th><th>Kategori</th><th>Prioritet</th><th>Sentiment</th><th></th></tr>
+            </thead>
+            <tbody id="mw-inbox-tbody"><tr><td colspan="7">Laddar...</td></tr></tbody>
+          </table>
+          <div id="mw-inbox-pagination" style="display:flex;justify-content:center;gap:0.5rem;margin-top:1rem"></div>
+        </section>
+      </div>
+
+      <!-- Tab: FAQ -->
+      <div class="site-tab-content" id="mw-tab-faq">
+        <section>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <h2>Vanliga fr&aring;gor (FAQ)</h2>
+            <div style="display:flex;gap:0.5rem">
+              <select id="mw-faq-filter" onchange="loadMwFaqs()">
+                <option value="">Alla</option>
+                <option value="approved">Godk&auml;nda</option>
+                <option value="pending">Ej godk&auml;nda</option>
+                <option value="archived">Arkiverade</option>
+              </select>
+              <button class="btn-small" onclick="exportMwFaqs()">Exportera</button>
+            </div>
+          </div>
+          <div id="mw-faq-list"><div class="card"><div class="sub">Laddar...</div></div></div>
+        </section>
+      </div>
+
+      <!-- Tab: Jobb -->
+      <div class="site-tab-content" id="mw-tab-jobs">
+        <section>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <h2>Bearbetningsjobb</h2>
+            <button class="btn-small btn-primary" onclick="loadMwJobs()">Uppdatera</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>ID</th><th>Typ</th><th>Brevl&aring;da</th><th>Status</th><th>Progress</th><th>Skapad</th><th></th></tr>
+            </thead>
+            <tbody id="mw-jobs-tbody"><tr><td colspan="7">Laddar...</td></tr></tbody>
+          </table>
+        </section>
+      </div>
+
+      <!-- Tab: Statistik -->
+      <div class="site-tab-content" id="mw-tab-stats">
+        <section>
+          <h2>&Ouml;versikt</h2>
+          <div class="grid" id="mw-detail-stats-grid"><div class="card"><h3>Laddar...</h3><div class="sub">&mdash;</div></div></div>
+        </section>
+        <section>
+          <h2>Kategorifördelning</h2>
+          <div id="mw-category-chart"><div class="card"><div class="sub">Laddar...</div></div></div>
+        </section>
+        <section>
+          <h2>Daglig statistik (senaste 30 dagar)</h2>
+          <div id="mw-daily-chart"><div class="card"><div class="sub">Laddar...</div></div></div>
+        </section>
+      </div>
+
+      <!-- Tab: Diagnostik -->
+      <div class="site-tab-content" id="mw-tab-diag">
+        <section>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+            <h2>Diagnostik</h2>
+            <button class="btn-primary" id="mw-diag-run-btn" onclick="runMwDiagnostics()">K&ouml;r alla tester</button>
+          </div>
+          <div id="mw-diag-results"><div class="card"><div class="sub">Klicka &quot;K&ouml;r alla tester&quot; f&ouml;r att starta</div></div></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ==================== API-NYCKEL: Statistik ==================== -->
+    <div id="view-key-usage" class="view">
+      <div style="margin-bottom: 1rem;">
+        <button class="back-btn" onclick="navigate('tools')">Tillbaka till verktyg</button>
+      </div>
+
+      <section>
+        <h2 id="key-usage-title">Statistik</h2>
+        <div class="grid" id="key-usage-summary"></div>
+      </section>
+
+      <section>
+        <h2>Mest använda endpoints</h2>
+        <table>
+          <thead><tr><th>Sökväg</th><th>Anrop</th></tr></thead>
+          <tbody id="key-usage-endpoints"><tr><td colspan="2">Laddar...</td></tr></tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>Statuskoder</h2>
+        <div id="key-usage-status" class="grid"></div>
+      </section>
+
+      <section>
+        <h2>Senaste anrop</h2>
+        <table>
+          <thead>
+            <tr><th>Tid</th><th>Metod</th><th>Sökväg</th><th>Status</th><th>Svar</th><th>IP</th></tr>
+          </thead>
+          <tbody id="key-usage-recent"><tr><td colspan="6">Laddar...</td></tr></tbody>
+        </table>
+      </section>
+    </div>
+
+    <!-- ==================== VERKTYG ==================== -->
+    <div id="view-tools" class="view">
+      <div style="margin-bottom: 1rem;">
+        <button class="back-btn" onclick="navigate('')">Tillbaka till hub</button>
+      </div>
+      <h2>Verktyg</h2>
+      <div class="tools-grid" id="global-tools-grid"></div>
+      <div id="global-tools-result" style="display:none;"></div>
+
+      <section id="keys-create-section" style="margin-top: 2rem;">
+        <h2>Skapa ny API-nyckel</h2>
+        <div class="form-section" id="keys-form">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="key-label">Namn</label>
+              <input type="text" id="key-label" placeholder="T.ex. 'MinRidskola Frontend'" maxlength="100">
+            </div>
+            <div class="form-group">
+              <label for="key-project">Projekt</label>
+              <select id="key-project"></select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="key-type">Konsumenttyp</label>
+              <select id="key-type">
+                <option value="server">Server</option>
+                <option value="web">Webb</option>
+                <option value="mobile">Mobil</option>
+                <option value="other">Annat</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="key-rate">Rate limit (anrop/minut)</label>
+              <input type="number" id="key-rate" value="100" min="1" max="10000">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="key-origins">Tillåtna origins</label>
+              <input type="text" id="key-origins" placeholder="https://example.com, https://other.com">
+              <div class="hint">Kommaseparerade. Lämna tomt för att tillåta alla.</div>
+            </div>
+            <div class="form-group">
+              <label for="key-expires">Utgångsdatum (valfritt)</label>
+              <input type="date" id="key-expires">
+            </div>
+          </div>
+          <button class="btn-primary" onclick="createApiKey()">Skapa nyckel</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Aktiva nycklar</h2>
+        <div id="keys-active-list"><div class="card"><div class="sub">Laddar...</div></div></div>
+      </section>
+
+      <section id="keys-revoked-section" style="display:none">
+        <h2>Revokerade nycklar</h2>
+        <div id="keys-revoked-list"></div>
+      </section>
+    </div>
+
+    <!-- ==================== INSTALLNINGAR ==================== -->
+    <div id="view-settings" class="view">
+      <div style="margin-bottom: 1rem;">
+        <button class="back-btn" onclick="navigate('')">Tillbaka till hub</button>
+      </div>
+
+      <h2>Inställningar</h2>
+      <div id="settings-tabs" style="display:flex;gap:0.5rem;margin:1rem 0 1.5rem;flex-wrap:wrap;"></div>
+      <div id="settings-form-container"></div>
+      <div id="settings-feedback" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Visa nyckel efter skapande -->
+  <div class="modal-overlay" id="key-created-modal">
+    <div class="modal">
+      <h2>API-nyckel skapad!</h2>
+      <p style="margin-bottom: 0.5rem; color: #555;">Nyckel för <strong id="modal-key-label"></strong>:</p>
+      <div class="key-value-display" id="modal-key-value"></div>
+      <div style="margin-bottom: 1rem;">
+        <button class="btn-copy" onclick="copyKey()">Kopiera nyckel</button>
+        <span id="copy-feedback" style="margin-left: 0.5rem; color: #059669; font-size: 0.85rem;"></span>
+      </div>
+      <div class="key-warning">
+        OBS: Spara denna nyckel nu! Den kan INTE visas igen.
+      </div>
+      <div style="margin-top: 1.2rem; text-align: right;">
+        <button class="btn-primary" onclick="closeKeyModal()">Klar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info-modal (check/skyddsbeskrivningar) -->
+  <div class="info-modal-overlay" id="info-modal-overlay" onclick="if(event.target===this)closeCheckInfo()">
+    <div class="info-modal" id="info-modal"></div>
+  </div>
+
+  <footer>Compuna Hub — Compuna AB</footer>
+
+  <script src="/js/dashboard.js?v=2.4"></script>
+</body>
+</html>

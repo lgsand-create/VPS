@@ -1,0 +1,20 @@
+{
+  "name": "compuna-hub",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "Compuna Hub — Multi-projekt scraping, import och REST API",
+  "scripts": {
+    "start": "node server.js",
+    "migrate": "node db/migrate.js",
+    "import": "node import/minridskola.js",
+    "import:latest": "node import/minridskola.js latest"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.0",
+    "express": "^4.21.0",
+    "mysql2": "^3.11.0",
+    "node-cron": "^3.0.3",
+    "ssh2": "^1.16.0",
+    "web-push": "^3.6.0"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "name": "playwright-project",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:ui": "npx playwright test --ui",
+    "test:debug": "npx playwright test --debug",
+    "test:auth": "npx playwright test tests/admin/auth.spec.js",
+    "test:pages": "npx playwright test tests/admin/pages.spec.js",
+    "test:js": "npx playwright test tests/admin/js-errors.spec.js",
+    "test:responsive": "npx playwright test tests/admin/responsive.spec.js",
+    "test:deep": "npx playwright test --project=deep",
+    "test:deep:links": "npx playwright test --project=deep tests/admin/deep/links.spec.js",
+    "test:deep:interactions": "npx playwright test --project=deep tests/admin/deep/interactions.spec.js",
+    "test:deep:forms": "npx playwright test --project=deep tests/admin/deep/forms.spec.js",
+    "test:deep:network": "npx playwright test --project=deep tests/admin/deep/network.spec.js",
+    "test:deep:screenshots": "npx playwright test --project=deep tests/admin/deep/screenshots.spec.js",
+    "test:deep:a11y": "npx playwright test --project=deep tests/admin/deep/a11y.spec.js",
+    "e2e": "npx playwright test --project=e2e-setup-admin --project=e2e-setup-portal --project=e2e-admin --project=e2e-portal --project=e2e-public --project=e2e-security",
+    "e2e:admin": "npx playwright test --project=e2e-setup-admin --project=e2e-admin",
+    "e2e:portal": "npx playwright test --project=e2e-setup-portal --project=e2e-portal",
+    "e2e:public": "npx playwright test --project=e2e-public",
+    "e2e:security": "npx playwright test --project=e2e-security",
+    "e2e:headed": "npx playwright test --project=e2e-setup-admin --project=e2e-setup-portal --project=e2e-admin --project=e2e-portal --headed",
+    "report": "npx playwright show-report",
+    "scrape:example": "node scrapers/example.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "dotenv": "^16.4.0",
+    "playwright": "^1.49.0"
+  },
+  "dependencies": {
+    "pdf-parse": "^1.1.4"
+  }
+}
