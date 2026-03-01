@@ -7,7 +7,7 @@
 | GPU | NVIDIA RTX 5060 Ti 16 GB (VFIO passthrough) |
 | CUDA | 12.8, Driver 570.211.01 |
 | Anvandare | jonas |
-| Roll | YOLO ML-worker |
+| Roll | YOLO ML-worker + Ollama LLM-server |
 | Autostart | Nej (manuell start -- GPU-beroende) |
 
 ## Installerade systempaket
@@ -158,6 +158,31 @@ optimizer=AdamW(lr=0.00125), patience=20
 
 **OBS:** Traning orsakar host-lockup efter ~60-70 epochs.
 Se `docs/infra/gpu-stability.md` for detaljer och atergarder.
+
+## Ollama LLM-server
+
+**Port:** 11434 (REST API)
+**Default-modell:** `llama3.1:8b`
+**Anvands av:** Mailwise (e-postanalys via LLM)
+
+Mailwise-projektet anropar Ollama via WireGuard (`10.10.10.104:11434`) for att analysera e-post — kategorisering, sentiment, sammanfattning och FAQ-extraktion.
+
+Konfigurerbart via hub_settings (kategori `mailwise`):
+
+| Installning | Default | Beskrivning |
+|--------------|---------|-------------|
+| `ollama_host` | `10.10.10.104` | IP-adress till Ollama-server |
+| `ollama_port` | `11434` | REST API-port |
+| `ollama_model` | `llama3.1:8b` | LLM-modell (t.ex. `qwen2.5:32b`) |
+
+### Vanliga kommandon (Ollama)
+
+```bash
+ollama list                          # Visa installerade modeller
+ollama run llama3.1:8b               # Testa modell interaktivt
+curl http://10.10.10.104:11434/api/tags  # Lista modeller via API
+systemctl status ollama              # Tjanststatus
+```
 
 ## Vanliga kommandon
 
